@@ -1,235 +1,398 @@
+// client/src/components/EmployeeForm.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { employeeService } from '../services/api.js';
+import { employeeService } from '../services/api';
 import Navbar from './Navbar.jsx';
 
 const EmployeeForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditing = !!id;
-
+  const isEditMode = !!id;
+  
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
+    fullName: '',
     email: '',
-    phone: '',
-    department: 'IT',
+    gender: '',
+    department: '',
     position: '',
-    salary: '',
-    hireDate: '',
+    phoneNumber: '',
+    location: '',
+    address: '',
     status: 'Active',
+    joinDate: new Date().toISOString().split('T')[0]
   });
-  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(isEditMode);
+  const [generatedEmpId, setGeneratedEmpId] = useState('');
+
+  const departments = [
+    'Human Resources', 'Information Technology', 'Finance', 'Marketing',
+    'Sales', 'Operations', 'Customer Support', 'Research & Development',
+    'Legal', 'Administration'
+  ];
+
+  const locations = [
+    "Mumbai, Maharashtra", "Delhi, Delhi", "Bengaluru, Karnataka",
+    "Chennai, Tamil Nadu", "Hyderabad, Telangana", "Kolkata, West Bengal",
+    "Pune, Maharashtra", "Ahmedabad, Gujarat", "Jaipur, Rajasthan",
+    "Surat, Gujarat", "Lucknow, Uttar Pradesh", "Kanpur, Uttar Pradesh"
+  ];
+
+  const genderOptions = [
+    { value: 'Male', label: '👨 Male' },
+    { value: 'Female', label: '👩 Female' },
+    { value: 'Other', label: '👤 Other' }
+  ];
+
+  const statusOptions = [
+    { value: 'Active', label: '🟢 Active' },
+    { value: 'Inactive', label: '🔴 Inactive' },
+    { value: 'On Leave', label: '🟡 On Leave' }
+  ];
 
   useEffect(() => {
-    if (isEditing) {
+    if (isEditMode) {
       fetchEmployee();
+    } else {
+      generateEmployeeIdPreview();
     }
   }, [id]);
+
+  const generateEmployeeIdPreview = () => {
+    const existingEmployees = JSON.parse(localStorage.getItem('ems_employees') || '[]');
+    const existingUsers = JSON.parse(localStorage.getItem('ems_users') || '[]');
+    
+    const allIds = [
+      ...existingEmployees.map(e => e.employeeId),
+      ...existingUsers.map(u => u.employeeId)
+    ].filter(id => id && id.startsWith('EMP'));
+    
+    let maxNum = 0;
+    allIds.forEach(id => {
+      const num = parseInt(id.replace('EMP', ''));
+      if (!isNaN(num) && num > maxNum) {
+        maxNum = num;
+      }
+    });
+    
+    const nextNum = maxNum + 1;
+    setGeneratedEmpId(`EMP${nextNum.toString().padStart(3, '0')}`);
+  };
 
   const fetchEmployee = async () => {
     try {
       const response = await employeeService.getById(id);
-      const employee = response.data;
-      setFormData({
-        firstName: employee.firstName,
-        lastName: employee.lastName,
-        email: employee.email,
-        phone: employee.phone,
-        department: employee.department,
-        position: employee.position,
-        salary: employee.salary,
-        hireDate: employee.hireDate.split('T')[0],
-        status: employee.status,
-      });
+      if (response.data) {
+        const emp = response.data;
+        setFormData({
+          name: emp.name || emp.fullName || '',
+          fullName: emp.fullName || emp.name || '',
+          email: emp.email || '',
+          gender: emp.gender || '',
+          department: emp.department || '',
+          position: emp.position || '',
+          phoneNumber: emp.phoneNumber || '',
+          location: emp.location || '',
+          address: emp.address || '',
+          status: emp.status || 'Active',
+          joinDate: emp.joinDate || new Date().toISOString().split('T')[0]
+        });
+        setGeneratedEmpId(emp.employeeId || '');
+      }
     } catch (error) {
+      console.error('Error fetching employee:', error);
       toast.error('Failed to fetch employee details');
       navigate('/employees');
+    } finally {
+      setFetching(false);
     }
   };
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [e.target.name]: e.target.value
     });
-    if (errors[e.target.name]) {
-      setErrors({
-        ...errors,
-        [e.target.name]: '',
-      });
-    }
   };
 
   const validateForm = () => {
-    const newErrors = {};
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!formData.email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-    if (!formData.phone) newErrors.phone = 'Phone number is required';
-    if (!formData.position) newErrors.position = 'Position is required';
-    if (!formData.salary) newErrors.salary = 'Salary is required';
-    else if (isNaN(formData.salary) || formData.salary < 0) newErrors.salary = 'Salary must be a positive number';
-    if (!formData.hireDate) newErrors.hireDate = 'Hire date is required';
-    return newErrors;
+    if (!formData.fullName && !formData.name) {
+      toast.error('Name is required');
+      return false;
+    }
+    if (!formData.email) {
+      toast.error('Email is required');
+      return false;
+    }
+    if (!formData.gender) {
+      toast.error('Gender is required');
+      return false;
+    }
+    if (!formData.department) {
+      toast.error('Department is required');
+      return false;
+    }
+    if (!formData.phoneNumber) {
+      toast.error('Phone number is required');
+      return false;
+    }
+    if (!formData.location) {
+      toast.error('Location is required');
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newErrors = validateForm();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
+    if (!validateForm()) return;
+    
     setLoading(true);
     try {
-      if (isEditing) {
-        await employeeService.update(id, formData);
-        toast.success('Employee updated successfully');
+      const employeeData = {
+        name: formData.fullName || formData.name,
+        fullName: formData.fullName || formData.name,
+        email: formData.email,
+        gender: formData.gender,
+        department: formData.department,
+        position: formData.position,
+        phoneNumber: formData.phoneNumber,
+        location: formData.location,
+        address: formData.address,
+        status: formData.status,
+        joinDate: formData.joinDate
+      };
+
+      let response;
+      if (isEditMode) {
+        response = await employeeService.update(id, employeeData);
+        toast.success('Employee updated successfully!');
+        
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (currentUser.email === formData.email) {
+          const updatedUser = {
+            ...currentUser,
+            fullName: employeeData.fullName,
+            gender: employeeData.gender,
+            department: employeeData.department,
+            phoneNumber: employeeData.phoneNumber,
+            location: employeeData.location,
+            address: employeeData.address,
+            position: employeeData.position
+          };
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          
+          const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+          const updatedProfile = {
+            ...userProfile,
+            fullName: employeeData.fullName,
+            gender: employeeData.gender,
+            department: employeeData.department,
+            phoneNumber: employeeData.phoneNumber,
+            location: employeeData.location,
+            address: employeeData.address,
+            position: employeeData.position,
+            updatedAt: new Date().toISOString()
+          };
+          localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+        }
+        
+        const users = JSON.parse(localStorage.getItem('ems_users') || '[]');
+        const userIndex = users.findIndex(u => u.email === formData.email);
+        if (userIndex !== -1) {
+          users[userIndex] = {
+            ...users[userIndex],
+            fullName: employeeData.fullName,
+            gender: employeeData.gender,
+            department: employeeData.department,
+            phoneNumber: employeeData.phoneNumber,
+            location: employeeData.location,
+            address: employeeData.address,
+            position: employeeData.position,
+            updatedAt: new Date().toISOString()
+          };
+          localStorage.setItem('ems_users', JSON.stringify(users));
+        }
       } else {
-        await employeeService.create(formData);
-        toast.success('Employee created successfully');
+        response = await employeeService.create(employeeData);
+        toast.success(`Employee added successfully! Employee ID: ${response.data.employeeId}`);
       }
+      
       navigate('/employees');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Operation failed');
+      console.error('Error saving employee:', error);
+      toast.error(isEditMode ? 'Failed to update employee' : 'Failed to add employee');
     } finally {
       setLoading(false);
     }
   };
 
+  if (fetching) {
+    return (
+      <div>
+        <Navbar />
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Navbar />
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="card">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            {isEditing ? 'Edit Employee' : 'Add New Employee'}
-          </h1>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4">
+            <h1 className="text-2xl font-bold text-white">
+              {isEditMode ? 'Edit Employee' : 'Add New Employee'}
+            </h1>
+            <p className="text-blue-100 text-sm mt-1">
+              {isEditMode ? 'Update employee information' : 'Enter employee details to add to system'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Employee ID Preview for New Employee */}
+            {!isEditMode && (
+              <div className="bg-blue-50 p-3 rounded-lg mb-4">
+                <p className="text-sm text-blue-800">
+                  <strong>📋 New Employee ID:</strong> {generatedEmpId}
+                </p>
+                <p className="text-xs text-blue-600 mt-1">Employee ID will be auto-generated</p>
+              </div>
+            )}
+            
+            {isEditMode && generatedEmpId && (
+              <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                <p className="text-sm text-gray-700">
+                  <strong>🆔 Employee ID:</strong> <span className="font-mono font-bold">{generatedEmpId}</span>
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name *
+                  Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  name="firstName"
-                  value={formData.firstName}
+                  name="fullName"
+                  value={formData.fullName || formData.name}
                   onChange={handleChange}
-                  className={`input-field ${errors.firstName ? 'border-red-500' : ''}`}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter full name"
                 />
-                {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name *
-                </label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  className={`input-field ${errors.lastName ? 'border-red-500' : ''}`}
-                />
-                {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
+                  Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`input-field ${errors.email ? 'border-red-500' : ''}`}
+                  required
+                  disabled={isEditMode}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    isEditMode ? 'bg-gray-100 cursor-not-allowed' : 'border-gray-300'
+                  }`}
+                  placeholder="employee@example.com"
                 />
-                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                {isEditMode && (
+                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                )}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone *
+                  Gender <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
+                <select
+                  name="gender"
+                  value={formData.gender}
                   onChange={handleChange}
-                  className={`input-field ${errors.phone ? 'border-red-500' : ''}`}
-                />
-                {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Gender</option>
+                  {genderOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Department *
+                  Department <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="department"
                   value={formData.department}
                   onChange={handleChange}
-                  className="input-field"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="HR">Human Resources</option>
-                  <option value="IT">Information Technology</option>
-                  <option value="Finance">Finance</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Sales">Sales</option>
-                  <option value="Operations">Operations</option>
+                  <option value="">Select Department</option>
+                  {departments.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Position *
+                  Position
                 </label>
                 <input
                   type="text"
                   name="position"
                   value={formData.position}
                   onChange={handleChange}
-                  className={`input-field ${errors.position ? 'border-red-500' : ''}`}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Software Engineer, Manager"
                 />
-                {errors.position && <p className="mt-1 text-sm text-red-600">{errors.position}</p>}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Salary *
+                  Phone Number <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  name="salary"
-                  value={formData.salary}
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
                   onChange={handleChange}
-                  className={`input-field ${errors.salary ? 'border-red-500' : ''}`}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="9876543210"
                 />
-                {errors.salary && <p className="mt-1 text-sm text-red-600">{errors.salary}</p>}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Hire Date *
+                  Location <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="date"
-                  name="hireDate"
-                  value={formData.hireDate}
+                <select
+                  name="location"
+                  value={formData.location}
                   onChange={handleChange}
-                  className={`input-field ${errors.hireDate ? 'border-red-500' : ''}`}
-                />
-                {errors.hireDate && <p className="mt-1 text-sm text-red-600">{errors.hireDate}</p>}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Location</option>
+                  {locations.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Status
@@ -238,29 +401,56 @@ const EmployeeForm = () => {
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  className="input-field"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                  <option value="On Leave">On Leave</option>
+                  {statusOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Join Date
+                </label>
+                <input
+                  type="date"
+                  name="joinDate"
+                  value={formData.joinDate}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Address
+                </label>
+                <textarea
+                  name="address"
+                  rows="3"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter complete address"
+                ></textarea>
+              </div>
             </div>
-            
-            <div className="flex justify-end space-x-3 pt-4">
+
+            <div className="flex justify-end space-x-3 pt-4 border-t">
               <button
                 type="button"
                 onClick={() => navigate('/employees')}
-                className="btn-secondary"
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
-                {loading ? 'Saving...' : (isEditing ? 'Update Employee' : 'Create Employee')}
+                {loading ? 'Saving...' : (isEditMode ? 'Update Employee' : 'Add Employee')}
               </button>
             </div>
           </form>

@@ -1,662 +1,691 @@
-// Local Storage Service for Employee Management
+// client/src/services/localStorage.service.js
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   USERS: 'ems_users',
-  EMPLOYEES: 'ems_employees',
   CURRENT_USER: 'ems_current_user',
-  TOKEN: 'ems_token',
-  LAST_BACKUP: 'ems_last_backup'
+  EMPLOYEES: 'ems_employees',
+  ASSIGNMENTS: 'ems_assignments',
+  NOTIFICATIONS: 'ems_notifications',
+  BACKUP: 'ems_last_backup',
+  STORAGE_MODE: 'storage_mode',
+  USER_PROFILE: 'userProfile',
+  LEAVE_REQUESTS: 'ems_leave_requests'
 };
 
-// Initialize default data if empty
-const initializeData = () => {
-  // Initialize users if empty
-  if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-    const defaultUsers = [
-      {
-        id: '1',
-        username: 'admin',
-        email: 'admin@example.com',
-        password: 'admin123',
-        fullName: 'Admin User',
-        phone: '+1234567890',
-        department: 'IT',
-        position: 'System Administrator',
-        avatar: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        username: 'john_doe',
-        email: 'john@example.com',
-        password: 'john123',
-        fullName: 'John Doe',
-        phone: '+1234567891',
-        department: 'IT',
-        position: 'Software Developer',
-        avatar: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: '3',
-        username: 'jane_smith',
-        email: 'jane@example.com',
-        password: 'jane123',
-        fullName: 'Jane Smith',
-        phone: '+1234567892',
-        department: 'HR',
-        position: 'HR Manager',
-        avatar: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(defaultUsers));
-  }
+const getUsers = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
+const getEmployees = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
+const getAssignments = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.ASSIGNMENTS) || '[]');
+const getNotifications = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS) || '[]');
+const getUserProfile = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_PROFILE) || '{}');
+const getLeaveRequests = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.LEAVE_REQUESTS) || '[]');
 
-  // Initialize employees if empty
-  if (!localStorage.getItem(STORAGE_KEYS.EMPLOYEES)) {
-    const defaultEmployees = [
-      {
-        id: '1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        phone: '+1234567890',
-        department: 'IT',
-        position: 'Senior Developer',
-        salary: 75000,
-        hireDate: '2023-01-15',
-        status: 'Active',
-        address: '123 Main St, New York, NY 10001',
-        city: 'New York',
-        state: 'NY',
-        zipCode: '10001',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'jane.smith@example.com',
-        phone: '+1234567891',
-        department: 'HR',
-        position: 'HR Manager',
-        salary: 65000,
-        hireDate: '2023-03-20',
-        status: 'Active',
-        address: '456 Oak Ave, Los Angeles, CA 90001',
-        city: 'Los Angeles',
-        state: 'CA',
-        zipCode: '90001',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: '3',
-        firstName: 'Mike',
-        lastName: 'Johnson',
-        email: 'mike.j@example.com',
-        phone: '+1234567892',
-        department: 'Finance',
-        position: 'Financial Analyst',
-        salary: 70000,
-        hireDate: '2023-06-10',
-        status: 'Active',
-        address: '789 Pine Rd, Chicago, IL 60601',
-        city: 'Chicago',
-        state: 'IL',
-        zipCode: '60601',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: '4',
-        firstName: 'Sarah',
-        lastName: 'Williams',
-        email: 'sarah.w@example.com',
-        phone: '+1234567893',
-        department: 'Marketing',
-        position: 'Marketing Specialist',
-        salary: 60000,
-        hireDate: '2023-08-05',
-        status: 'Active',
-        address: '321 Elm Blvd, Houston, TX 77001',
-        city: 'Houston',
-        state: 'TX',
-        zipCode: '77001',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: '5',
-        firstName: 'Robert',
-        lastName: 'Brown',
-        email: 'robert.b@example.com',
-        phone: '+1234567894',
-        department: 'Sales',
-        position: 'Sales Executive',
-        salary: 55000,
-        hireDate: '2023-09-12',
-        status: 'Active',
-        address: '654 Cedar Ln, Phoenix, AZ 85001',
-        city: 'Phoenix',
-        state: 'AZ',
-        zipCode: '85001',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
-    localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(defaultEmployees));
-  }
+const saveUsers = (users) => localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+const saveEmployees = (employees) => localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(employees));
+const saveAssignments = (assignments) => localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignments));
+const saveNotifications = (notifications) => localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(notifications));
+const saveUserProfile = (profile) => localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
+const saveLeaveRequests = (requests) => localStorage.setItem(STORAGE_KEYS.LEAVE_REQUESTS, JSON.stringify(requests));
+
+// Helper function to generate Employee ID
+const generateEmployeeId = () => {
+  const users = getUsers();
+  const employees = getEmployees();
+  
+  const allIds = [
+    ...users.map(u => u.employeeId),
+    ...employees.map(e => e.employeeId)
+  ].filter(id => id && id.startsWith('EMP'));
+  
+  let maxNum = 0;
+  allIds.forEach(id => {
+    const num = parseInt(id.replace('EMP', ''));
+    if (!isNaN(num) && num > maxNum) {
+      maxNum = num;
+    }
+  });
+  
+  const nextNum = maxNum + 1;
+  return `EMP${nextNum.toString().padStart(3, '0')}`;
 };
 
-// Call initialize on service load
-initializeData();
-
-// User Services
+// ========== AUTH SERVICE ==========
 export const localAuthService = {
-  // Register new user
-  register: (userData) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
-        
-        // Check if user already exists
-        const existingUser = users.find(u => u.email === userData.email || u.username === userData.username);
-        if (existingUser) {
-          reject({ response: { data: { message: 'User already exists' } } });
-          return;
-        }
-
-        const newUser = {
-          id: Date.now().toString(),
-          username: userData.username,
-          email: userData.email,
-          password: userData.password,
-          fullName: userData.fullName || '',
-          phone: userData.phone || '',
-          department: userData.department || '',
-          position: userData.position || '',
-          avatar: '',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        
-        users.push(newUser);
-        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-        
-        // Create token
-        const token = `local_token_${newUser.id}`;
-        localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-        
-        const currentUser = {
-          id: newUser.id,
-          username: newUser.username,
-          email: newUser.email,
-          fullName: newUser.fullName,
-          phone: newUser.phone,
-          department: newUser.department,
-          position: newUser.position
-        };
-        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser));
-        
-        resolve({
-          data: {
-            message: 'User created successfully',
-            token,
-            user: currentUser
-          }
-        });
-      }, 500);
-    });
-  },
-
-  // Login user
-  login: (credentials) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
-        const user = users.find(u => u.email === credentials.email && u.password === credentials.password);
-        
-        if (!user) {
-          reject({ response: { data: { message: 'Invalid credentials' } } });
-          return;
-        }
-
-        const token = `local_token_${user.id}`;
-        localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-        
-        const currentUser = {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          fullName: user.fullName || '',
-          phone: user.phone || '',
-          department: user.department || '',
-          position: user.position || ''
-        };
-        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser));
-        
-        resolve({
-          data: {
-            message: 'Login successful',
-            token,
-            user: currentUser
-          }
-        });
-      }, 500);
-    });
-  },
-
-  // Get current user
-  getMe: () => {
-    return new Promise((resolve) => {
-      const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER) || '{}');
-      resolve({ data: user });
-    });
-  },
-
-  // Update user profile
-  updateProfile: (userData) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
-        const currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER) || '{}');
-        const userIndex = users.findIndex(u => u.id === currentUser.id);
-        
-        if (userIndex === -1) {
-          reject({ response: { data: { message: 'User not found' } } });
-          return;
-        }
-        
-        // Update user in users array
-        users[userIndex] = {
-          ...users[userIndex],
-          username: userData.username || users[userIndex].username,
-          email: userData.email || users[userIndex].email,
-          fullName: userData.fullName || users[userIndex].fullName,
-          phone: userData.phone || users[userIndex].phone,
-          department: userData.department || users[userIndex].department,
-          position: userData.position || users[userIndex].position,
-          updatedAt: new Date().toISOString()
-        };
-        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-        
-        // Update current user
-        const updatedCurrentUser = {
-          id: users[userIndex].id,
-          username: users[userIndex].username,
-          email: users[userIndex].email,
-          fullName: users[userIndex].fullName,
-          phone: users[userIndex].phone,
-          department: users[userIndex].department,
-          position: users[userIndex].position
-        };
-        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updatedCurrentUser));
-        
-        resolve({ 
-          data: { 
-            message: 'Profile updated successfully',
-            user: updatedCurrentUser 
-          } 
-        });
-      }, 500);
-    });
-  },
-
-  // Change password
-  changePassword: (currentPassword, newPassword) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
-        const currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER) || '{}');
-        const user = users.find(u => u.id === currentUser.id);
-        
-        if (!user) {
-          reject({ response: { data: { message: 'User not found' } } });
-          return;
-        }
-        
-        if (user.password !== currentPassword) {
-          reject({ response: { data: { message: 'Current password is incorrect' } } });
-          return;
-        }
-        
-        const userIndex = users.findIndex(u => u.id === currentUser.id);
-        users[userIndex].password = newPassword;
-        users[userIndex].updatedAt = new Date().toISOString();
-        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-        
-        resolve({ data: { message: 'Password changed successfully' } });
-      }, 500);
-    });
-  },
-
-  // Logout
-  logout: () => {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
-  },
-
-  // Check if logged in
-  isAuthenticated: () => {
-    return !!localStorage.getItem(STORAGE_KEYS.TOKEN);
-  },
-
-  // Get token
-  getToken: () => {
-    return localStorage.getItem(STORAGE_KEYS.TOKEN);
-  },
-  
-  // Get all users (for admin)
-  getAllUsers: () => {
-    return new Promise((resolve) => {
-      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
-      const safeUsers = users.map(u => {
-        const { password, ...userWithoutPassword } = u;
-        return userWithoutPassword;
-      });
-      resolve({ data: safeUsers });
-    });
-  },
-  
-  // Delete user (for admin)
-  deleteUser: (userId) => {
-    return new Promise((resolve, reject) => {
-      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
-      const currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER) || '{}');
-      
-      if (userId === currentUser.id) {
-        reject({ response: { data: { message: 'Cannot delete your own account' } } });
-        return;
-      }
-      
-      const filteredUsers = users.filter(u => u.id !== userId);
-      if (filteredUsers.length === users.length) {
-        reject({ response: { data: { message: 'User not found' } } });
-        return;
-      }
-      
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(filteredUsers));
-      resolve({ data: { message: 'User deleted successfully' } });
-    });
-  }
-};
-
-// Employee Services with Local Storage
-export const localEmployeeService = {
-  // Get all employees with pagination and search
-  getAll: (params = {}) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let employees = JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-        
-        // Apply search filter
-        const { page = 1, limit = 10, search = '' } = params;
-        if (search) {
-          employees = employees.filter(emp =>
-            emp.firstName.toLowerCase().includes(search.toLowerCase()) ||
-            emp.lastName.toLowerCase().includes(search.toLowerCase()) ||
-            emp.email.toLowerCase().includes(search.toLowerCase()) ||
-            emp.department.toLowerCase().includes(search.toLowerCase()) ||
-            emp.position.toLowerCase().includes(search.toLowerCase())
-          );
-        }
-        
-        // Sort by createdAt descending
-        employees.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        
-        const total = employees.length;
-        const start = (page - 1) * limit;
-        const end = start + limit;
-        const paginatedEmployees = employees.slice(start, end);
-        
-        resolve({
-          data: {
-            employees: paginatedEmployees,
-            totalPages: Math.ceil(total / limit),
-            currentPage: page,
-            total
-          }
-        });
-      }, 300);
-    });
-  },
-
-  // Get employee by ID
-  getById: (id) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const employees = JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-        const employee = employees.find(emp => emp.id === id);
-        
-        if (!employee) {
-          reject({ response: { data: { message: 'Employee not found' } } });
-          return;
-        }
-        
-        resolve({ data: employee });
-      }, 300);
-    });
-  },
-
-  // Create employee
-  create: (employeeData) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const employees = JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-        
-        // Check if email already exists
-        const existingEmployee = employees.find(emp => emp.email === employeeData.email);
-        if (existingEmployee) {
-          reject({ response: { data: { message: 'Email already exists' } } });
-          return;
-        }
-        
-        const newEmployee = {
-          id: Date.now().toString(),
-          ...employeeData,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        
-        employees.push(newEmployee);
-        localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(employees));
-        
-        resolve({ data: newEmployee });
-      }, 500);
-    });
-  },
-
-  // Update employee
-  update: (id, employeeData) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        let employees = JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-        const index = employees.findIndex(emp => emp.id === id);
-        
-        if (index === -1) {
-          reject({ response: { data: { message: 'Employee not found' } } });
-          return;
-        }
-        
-        // Check if email already exists for another employee
-        const existingEmployee = employees.find(emp => emp.email === employeeData.email && emp.id !== id);
-        if (existingEmployee) {
-          reject({ response: { data: { message: 'Email already exists' } } });
-          return;
-        }
-        
-        employees[index] = {
-          ...employees[index],
-          ...employeeData,
-          updatedAt: new Date().toISOString()
-        };
-        
-        localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(employees));
-        resolve({ data: employees[index] });
-      }, 500);
-    });
-  },
-
-  // Delete employee
-  delete: (id) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        let employees = JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-        const filteredEmployees = employees.filter(emp => emp.id !== id);
-        
-        if (filteredEmployees.length === employees.length) {
-          reject({ response: { data: { message: 'Employee not found' } } });
-          return;
-        }
-        
-        localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(filteredEmployees));
-        resolve({ data: { message: 'Employee deleted successfully' } });
-      }, 500);
-    });
-  },
-  
-  // Get employees by department
-  getByDepartment: (department) => {
-    return new Promise((resolve) => {
-      const employees = JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-      const filtered = employees.filter(emp => emp.department === department);
-      resolve({ data: filtered });
-    });
-  },
-  
-  // Get employees by status
-  getByStatus: (status) => {
-    return new Promise((resolve) => {
-      const employees = JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-      const filtered = employees.filter(emp => emp.status === status);
-      resolve({ data: filtered });
-    });
-  },
-  
-  // Get employee statistics
-  getStatistics: () => {
-    return new Promise((resolve) => {
-      const employees = JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-      const departmentCount = {};
-      let activeCount = 0;
-      let totalSalary = 0;
-      
-      employees.forEach(emp => {
-        if (emp.status === 'Active') activeCount++;
-        departmentCount[emp.department] = (departmentCount[emp.department] || 0) + 1;
-        totalSalary += emp.salary || 0;
-      });
-      
-      resolve({
-        data: {
-          total: employees.length,
-          active: activeCount,
-          inactive: employees.filter(emp => emp.status === 'Inactive').length,
-          onLeave: employees.filter(emp => emp.status === 'On Leave').length,
-          totalSalary: totalSalary,
-          averageSalary: employees.length > 0 ? totalSalary / employees.length : 0,
-          departments: Object.entries(departmentCount).map(([name, count]) => ({ name, count }))
-        }
-      });
-    });
-  },
-  
-  // Bulk import employees
-  bulkImport: (employeesData) => {
-    return new Promise((resolve) => {
-      const existingEmployees = JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-      const newEmployees = employeesData.map(emp => ({
-        ...emp,
-        id: Date.now().toString() + Math.random(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }));
-      
-      const allEmployees = [...existingEmployees, ...newEmployees];
-      localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(allEmployees));
-      
-      resolve({ data: { message: `${newEmployees.length} employees imported successfully` } });
-    });
-  },
-  
-  // Export all employees
-  exportAll: () => {
-    return new Promise((resolve) => {
-      const employees = JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-      resolve({ data: employees });
-    });
-  }
-};
-
-// Backup and restore services
-export const backupService = {
-  // Create backup of all data
-  createBackup: () => {
-    const data = {
-      users: JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]'),
-      employees: JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]'),
-      exportDate: new Date().toISOString(),
-      version: '1.0.0'
+  register: async (userData) => {
+    const users = getUsers();
+    const existingUser = users.find(u => u.email === userData.email);
+    
+    if (existingUser) {
+      throw new Error('User already exists');
+    }
+    
+    const employeeId = generateEmployeeId();
+    
+    const newUser = {
+      id: Date.now().toString(),
+      employeeId: employeeId,
+      username: userData.username,
+      email: userData.email,
+      password: userData.password,
+      fullName: userData.fullName || userData.username,
+      gender: userData.gender || '',
+      role: userData.role || 'employee',
+      department: userData.department || '',
+      position: userData.position || '',
+      phoneNumber: userData.phoneNumber || '',
+      location: userData.location || '',
+      address: userData.address || '',
+      createdAt: new Date().toISOString()
     };
     
-    localStorage.setItem(STORAGE_KEYS.LAST_BACKUP, JSON.stringify(new Date().toISOString()));
-    return data;
-  },
-  
-  // Restore from backup
-  restoreBackup: (backupData) => {
-    return new Promise((resolve, reject) => {
-      try {
-        if (backupData.users) {
-          localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(backupData.users));
-        }
-        if (backupData.employees) {
-          localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(backupData.employees));
-        }
-        resolve({ message: 'Backup restored successfully' });
-      } catch (error) {
-        reject({ message: 'Failed to restore backup' });
-      }
-    });
-  },
-  
-  // Clear all data
-  clearAllData: () => {
-    localStorage.removeItem(STORAGE_KEYS.USERS);
-    localStorage.removeItem(STORAGE_KEYS.EMPLOYEES);
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
-    initializeData(); // Re-initialize with default data
-  },
-  
-  // Get storage statistics
-  getStorageStats: () => {
-    let totalSize = 0;
-    const keys = Object.keys(localStorage);
+    users.push(newUser);
+    saveUsers(users);
     
-    keys.forEach(key => {
-      if (key.startsWith('ems_')) {
-        totalSize += localStorage[key].length;
+    const employees = getEmployees();
+    const newEmployee = {
+      id: Date.now().toString(),
+      employeeId: employeeId,
+      name: newUser.fullName,
+      fullName: newUser.fullName,
+      email: newUser.email,
+      gender: newUser.gender,
+      department: newUser.department,
+      position: newUser.position,
+      phoneNumber: newUser.phoneNumber,
+      location: newUser.location,
+      address: newUser.address,
+      status: 'Active',
+      joinDate: new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString()
+    };
+    employees.push(newEmployee);
+    saveEmployees(employees);
+    
+    const userProfile = {
+      id: newUser.id,
+      employeeId: employeeId,
+      username: newUser.username,
+      email: newUser.email,
+      fullName: newUser.fullName,
+      gender: newUser.gender,
+      department: newUser.department,
+      phoneNumber: newUser.phoneNumber,
+      location: newUser.location,
+      address: newUser.address,
+      position: newUser.position,
+      role: newUser.role,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      profilePicture: null,
+      skills: [],
+      experience: [],
+      education: []
+    };
+    saveUserProfile(userProfile);
+    
+    const token = `local_token_${newUser.id}`;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify({
+      id: newUser.id,
+      employeeId: employeeId,
+      username: newUser.username,
+      email: newUser.email,
+      role: newUser.role,
+      fullName: newUser.fullName,
+      gender: newUser.gender,
+      department: newUser.department
+    }));
+    localStorage.setItem('userRole', newUser.role);
+    
+    return { data: { token, user: newUser, employeeId: employeeId } };
+  },
+  
+  login: async (credentials) => {
+    const users = getUsers();
+    const employees = getEmployees();
+    
+    // Try to find by Employee ID first
+    let user = users.find(u => u.employeeId === credentials.employeeIdOrEmail && u.password === credentials.password);
+    
+    // If not found by Employee ID, try by email
+    if (!user) {
+      user = users.find(u => u.email === credentials.employeeIdOrEmail && u.password === credentials.password);
+    }
+    
+    if (!user) {
+      throw new Error('Invalid credentials');
+    }
+    
+    const employee = employees.find(e => e.email === user.email);
+    
+    const token = `local_token_${user.id}`;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify({
+      id: user.id,
+      employeeId: user.employeeId,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      fullName: user.fullName,
+      gender: user.gender,
+      department: user.department,
+      position: user.position,
+      phoneNumber: user.phoneNumber,
+      location: user.location
+    }));
+    localStorage.setItem('userRole', user.role);
+    
+    return { data: { token, user, employee } };
+  },
+  
+  getMe: async () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (!user.id) throw new Error('Not authenticated');
+    return { data: user };
+  },
+  
+  updateProfile: async (userData) => {
+    const users = getUsers();
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    
+    if (userIndex !== -1) {
+      users[userIndex] = { ...users[userIndex], ...userData, updatedAt: new Date().toISOString() };
+      saveUsers(users);
+      localStorage.setItem('user', JSON.stringify(users[userIndex]));
+      
+      const profile = getUserProfile();
+      const updatedProfile = { ...profile, ...userData, updatedAt: new Date().toISOString() };
+      saveUserProfile(updatedProfile);
+      
+      const employees = getEmployees();
+      const empIndex = employees.findIndex(e => e.email === users[userIndex].email);
+      if (empIndex !== -1) {
+        employees[empIndex] = { ...employees[empIndex], ...userData, updatedAt: new Date().toISOString() };
+        saveEmployees(employees);
       }
+    }
+    
+    return { data: users[userIndex] };
+  },
+  
+  changePassword: async (currentPassword, newPassword) => {
+    const users = getUsers();
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = users.find(u => u.id === currentUser.id);
+    
+    if (user && user.password !== currentPassword) {
+      throw new Error('Current password is incorrect');
+    }
+    
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    if (userIndex !== -1) {
+      users[userIndex].password = newPassword;
+      saveUsers(users);
+    }
+    
+    return { data: { success: true } };
+  },
+  
+  logout: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userProfile');
+  },
+  
+  isAuthenticated: () => !!localStorage.getItem('token'),
+  getToken: () => localStorage.getItem('token')
+};
+
+// ========== EMPLOYEE SERVICE ==========
+export const localEmployeeService = {
+  getAll: async (params = {}) => {
+    let employees = getEmployees();
+    const { limit = 100, page = 1, search, department, status } = params;
+    
+    if (search) {
+      employees = employees.filter(emp => 
+        emp.employeeId?.toLowerCase().includes(search.toLowerCase()) ||
+        emp.name?.toLowerCase().includes(search.toLowerCase()) ||
+        emp.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+        emp.email?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    if (department) employees = employees.filter(emp => emp.department === department);
+    if (status) employees = employees.filter(emp => emp.status === status);
+    
+    const total = employees.length;
+    const paginated = employees.slice((page - 1) * limit, page * limit);
+    
+    return { data: { employees: paginated, total, page, limit } };
+  },
+  
+  getById: async (id) => {
+    const employees = getEmployees();
+    const employee = employees.find(emp => emp.id === id);
+    if (!employee) throw new Error('Employee not found');
+    return { data: employee };
+  },
+  
+  getByEmployeeId: async (employeeId) => {
+    const employees = getEmployees();
+    const employee = employees.find(emp => emp.employeeId === employeeId);
+    if (!employee) throw new Error('Employee not found');
+    return { data: employee };
+  },
+  
+  create: async (data) => {
+    const employees = getEmployees();
+    const employeeId = generateEmployeeId();
+    
+    const newEmployee = {
+      id: Date.now().toString(),
+      employeeId: employeeId,
+      name: data.fullName || data.name,
+      fullName: data.fullName || data.name,
+      email: data.email,
+      gender: data.gender || '',
+      department: data.department,
+      position: data.position || '',
+      phoneNumber: data.phoneNumber,
+      location: data.location,
+      address: data.address || '',
+      status: data.status || 'Active',
+      joinDate: data.joinDate || new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString()
+    };
+    
+    employees.push(newEmployee);
+    saveEmployees(employees);
+    
+    const users = getUsers();
+    const newUser = {
+      id: Date.now().toString(),
+      employeeId: employeeId,
+      username: data.email.split('@')[0],
+      email: data.email,
+      password: 'password123',
+      fullName: data.fullName || data.name,
+      gender: data.gender || '',
+      role: 'employee',
+      department: data.department,
+      position: data.position || '',
+      phoneNumber: data.phoneNumber,
+      location: data.location,
+      address: data.address || '',
+      status: 'active',
+      createdAt: new Date().toISOString()
+    };
+    users.push(newUser);
+    saveUsers(users);
+    
+    return { data: newEmployee };
+  },
+  
+  update: async (id, data) => {
+    const employees = getEmployees();
+    const index = employees.findIndex(emp => emp.id === id);
+    if (index === -1) throw new Error('Employee not found');
+    
+    employees[index] = { ...employees[index], ...data, updatedAt: new Date().toISOString() };
+    saveEmployees(employees);
+    
+    const users = getUsers();
+    const userIndex = users.findIndex(u => u.email === data.email);
+    if (userIndex !== -1) {
+      users[userIndex] = {
+        ...users[userIndex],
+        fullName: data.fullName || data.name,
+        gender: data.gender,
+        department: data.department,
+        phoneNumber: data.phoneNumber,
+        location: data.location,
+        address: data.address,
+        position: data.position,
+        updatedAt: new Date().toISOString()
+      };
+      saveUsers(users);
+    }
+    
+    return { data: employees[index] };
+  },
+  
+  delete: async (id) => {
+    const employees = getEmployees();
+    const employee = employees.find(emp => emp.id === id);
+    const filtered = employees.filter(emp => emp.id !== id);
+    saveEmployees(filtered);
+    
+    if (employee) {
+      const users = getUsers();
+      const filteredUsers = users.filter(u => u.email !== employee.email);
+      saveUsers(filteredUsers);
+    }
+    
+    return { data: { success: true } };
+  },
+  
+  getStats: async () => {
+    const employees = getEmployees();
+    const departmentCount = {};
+    let activeCount = 0;
+    
+    employees.forEach(emp => {
+      if (emp.status === 'Active' || emp.status === 'active') activeCount++;
+      const dept = emp.department || 'Unassigned';
+      departmentCount[dept] = (departmentCount[dept] || 0) + 1;
     });
     
     return {
-      totalKeys: keys.filter(k => k.startsWith('ems_')).length,
-      totalSizeBytes: totalSize,
-      totalSizeKB: (totalSize / 1024).toFixed(2),
-      totalSizeMB: (totalSize / (1024 * 1024)).toFixed(4)
+      data: {
+        total: employees.length,
+        active: activeCount,
+        departments: Object.entries(departmentCount).map(([name, count]) => ({ name, count }))
+      }
     };
   }
 };
 
-// Export storage keys for debugging
-export { STORAGE_KEYS };
+// ========== ASSIGNMENT SERVICE ==========
+export const localAssignmentService = {
+  getAll: async (params = {}) => {
+    let assignments = getAssignments();
+    const { department, employee, status } = params;
+    
+    if (department) assignments = assignments.filter(a => a.assignedDepartment === department);
+    if (employee) assignments = assignments.filter(a => a.assignedTo === employee);
+    if (status) assignments = assignments.filter(a => a.status === status);
+    
+    assignments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return { data: { assignments } };
+  },
+  
+  getById: async (id) => {
+    const assignments = getAssignments();
+    const assignment = assignments.find(a => a.id === id);
+    if (!assignment) throw new Error('Assignment not found');
+    return { data: assignment };
+  },
+  
+  create: async (data) => {
+    const assignments = getAssignments();
+    const newAssignment = {
+      ...data,
+      id: data.id || Date.now().toString(),
+      status: data.status || 'Not Started',
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    assignments.push(newAssignment);
+    saveAssignments(assignments);
+    return { data: newAssignment };
+  },
+  
+  update: async (id, data) => {
+    const assignments = getAssignments();
+    const index = assignments.findIndex(a => a.id === id);
+    if (index === -1) throw new Error('Assignment not found');
+    assignments[index] = { ...assignments[index], ...data, updatedAt: new Date().toISOString() };
+    saveAssignments(assignments);
+    return { data: assignments[index] };
+  },
+  
+  updateStatus: async (id, status) => {
+    const assignments = getAssignments();
+    const index = assignments.findIndex(a => a.id === id);
+    if (index === -1) throw new Error('Assignment not found');
+    assignments[index] = {
+      ...assignments[index],
+      status,
+      updatedAt: new Date().toISOString(),
+      completedAt: status === 'Completed' ? new Date().toISOString() : assignments[index].completedAt
+    };
+    saveAssignments(assignments);
+    return { data: assignments[index] };
+  },
+  
+  delete: async (id) => {
+    const assignments = getAssignments();
+    const filtered = assignments.filter(a => a.id !== id);
+    saveAssignments(filtered);
+    return { data: { success: true } };
+  },
+  
+  getByDepartment: async (department) => {
+    const assignments = getAssignments();
+    const filtered = assignments.filter(a => a.assignedDepartment === department);
+    return { data: { assignments: filtered } };
+  },
+  
+  getByEmployee: async (email) => {
+    const assignments = getAssignments();
+    const filtered = assignments.filter(a => a.assignedTo === email);
+    return { data: { assignments: filtered } };
+  }
+};
 
-// Export a flag to indicate if using local storage
-export const useLocalStorage = true;
+// ========== NOTIFICATION SERVICE ==========
+export const localNotificationService = {
+  getAll: async (params = {}) => {
+    let notifications = getNotifications();
+    const { assignedTo, department, type, role, targetUser } = params;
+    
+    if (assignedTo) notifications = notifications.filter(n => n.assignedTo === assignedTo);
+    if (department) notifications = notifications.filter(n => n.department === department);
+    if (type) notifications = notifications.filter(n => n.type === type);
+    
+    if (role === 'admin') {
+      notifications = notifications.filter(n => 
+        n.type === 'leave_request' || n.type === 'completion' || n.type === 'assignment' || n.targetRole === 'admin'
+      );
+    } else if (role === 'employee' && targetUser) {
+      notifications = notifications.filter(n => 
+        n.targetUser === targetUser || 
+        n.department === department ||
+        (n.type === 'assignment' && (n.assignedTo === targetUser || n.assignedDepartment === department))
+      );
+    }
+    
+    notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return { data: { notifications } };
+  },
+  
+  create: async (data) => {
+    const notifications = getNotifications();
+    const newNotification = {
+      ...data,
+      id: data.id || Date.now().toString(),
+      read: false,
+      createdAt: new Date().toISOString(),
+      targetRole: data.targetRole || null,
+      targetUser: data.targetUser || null,
+      targetDepartment: data.targetDepartment || null
+    };
+    notifications.unshift(newNotification);
+    saveNotifications(notifications);
+    return { data: newNotification };
+  },
+  
+  markAsRead: async (id) => {
+    const notifications = getNotifications();
+    const index = notifications.findIndex(n => n.id === id);
+    if (index !== -1) {
+      notifications[index].read = true;
+      saveNotifications(notifications);
+    }
+    return { data: { success: true } };
+  },
+  
+  markAllAsRead: async (role, userEmail) => {
+    let notifications = getNotifications();
+    if (role === 'admin') {
+      notifications = notifications.map(n => ({ ...n, read: true }));
+    } else {
+      notifications = notifications.map(n => {
+        if (n.targetUser === userEmail || (n.type === 'assignment' && n.assignedTo === userEmail)) {
+          return { ...n, read: true };
+        }
+        return n;
+      });
+    }
+    saveNotifications(notifications);
+    return { data: { success: true } };
+  },
+  
+  delete: async (id) => {
+    const notifications = getNotifications();
+    const filtered = notifications.filter(n => n.id !== id);
+    saveNotifications(filtered);
+    return { data: { success: true } };
+  },
+  
+  clearAll: async (role, userEmail) => {
+    let notifications = getNotifications();
+    if (role === 'admin') {
+      notifications = [];
+    } else {
+      notifications = notifications.filter(n => 
+        n.targetUser !== userEmail && !(n.type === 'assignment' && n.assignedTo === userEmail)
+      );
+    }
+    saveNotifications(notifications);
+    return { data: { success: true } };
+  },
+  
+  getUnreadCount: async (role, userEmail, userDepartment) => {
+    let notifications = getNotifications();
+    if (role === 'admin') {
+      notifications = notifications.filter(n => !n.read);
+    } else {
+      notifications = notifications.filter(n => 
+        (!n.read) && (
+          n.targetUser === userEmail || 
+          n.targetDepartment === userDepartment ||
+          (n.type === 'assignment' && (n.assignedTo === userEmail || n.assignedDepartment === userDepartment))
+        )
+      );
+    }
+    return { data: { count: notifications.length } };
+  }
+};
+
+// ========== DEPARTMENT SERVICE ==========
+export const localDepartmentService = {
+  getAll: async () => {
+    const employees = getEmployees();
+    const departments = [...new Set(employees.map(emp => emp.department).filter(Boolean))];
+    return { data: { departments } };
+  },
+  
+  getStats: async () => {
+    const employees = getEmployees();
+    const stats = {};
+    employees.forEach(emp => { if (emp.department) stats[emp.department] = (stats[emp.department] || 0) + 1; });
+    return { data: { stats } };
+  }
+};
+
+// ========== LEAVE SERVICE ==========
+export const localLeaveService = {
+  getAll: async () => {
+    const leaves = getLeaveRequests();
+    return { data: { leaves } };
+  },
+  
+  getByEmployee: async (email) => {
+    const leaves = getLeaveRequests();
+    const filtered = leaves.filter(l => l.employeeEmail === email);
+    return { data: { leaves: filtered } };
+  },
+  
+  create: async (data) => {
+    const leaves = getLeaveRequests();
+    const newLeave = {
+      ...data,
+      id: data.id || Date.now().toString(),
+      status: 'Pending',
+      appliedOn: new Date().toISOString()
+    };
+    leaves.push(newLeave);
+    saveLeaveRequests(leaves);
+    return { data: newLeave };
+  },
+  
+  updateStatus: async (id, status, reviewedBy, comments) => {
+    const leaves = getLeaveRequests();
+    const index = leaves.findIndex(l => l.id === id);
+    if (index !== -1) {
+      leaves[index] = {
+        ...leaves[index],
+        status,
+        reviewedBy,
+        reviewedOn: new Date().toISOString(),
+        comments: comments || null
+      };
+      saveLeaveRequests(leaves);
+    }
+    return { data: leaves[index] };
+  }
+};
+
+// ========== BACKUP SERVICE ==========
+export const backupService = {
+  exportData: () => {
+    const data = {
+      users: getUsers(),
+      employees: getEmployees(),
+      assignments: getAssignments(),
+      notifications: getNotifications(),
+      leaveRequests: getLeaveRequests(),
+      exportDate: new Date().toISOString(),
+      version: '1.0.0'
+    };
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ems_backup_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    localStorage.setItem(STORAGE_KEYS.BACKUP, JSON.stringify(new Date().toISOString()));
+  },
+  
+  importData: async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.users) saveUsers(data.users);
+          if (data.employees) saveEmployees(data.employees);
+          if (data.assignments) saveAssignments(data.assignments);
+          if (data.notifications) saveNotifications(data.notifications);
+          if (data.leaveRequests) saveLeaveRequests(data.leaveRequests);
+          resolve({ data: { success: true } });
+        } catch (error) { reject(error); }
+      };
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  },
+  
+  clearAllData: () => {
+    localStorage.removeItem(STORAGE_KEYS.USERS);
+    localStorage.removeItem(STORAGE_KEYS.EMPLOYEES);
+    localStorage.removeItem(STORAGE_KEYS.ASSIGNMENTS);
+    localStorage.removeItem(STORAGE_KEYS.NOTIFICATIONS);
+    localStorage.removeItem(STORAGE_KEYS.BACKUP);
+    localStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
+    localStorage.removeItem(STORAGE_KEYS.LEAVE_REQUESTS);
+  },
+  
+  getStats: () => ({
+    users: getUsers().length,
+    employees: getEmployees().length,
+    assignments: getAssignments().length,
+    notifications: getNotifications().length,
+    leaveRequests: getLeaveRequests().length
+  })
+};
