@@ -169,7 +169,6 @@ const Login = () => {
           <div className="bg-blue-50 p-3 rounded-lg">
             <p className="text-xs text-blue-800">
               <strong>Demo Access:</strong><br />
-              👑 Admin: ADMIN001 / admin123<br />
               👤 Employee: Use your registered Employee ID (EMP001, EMP002...)
             </p>
             <p className="text-xs text-green-600 mt-2">
