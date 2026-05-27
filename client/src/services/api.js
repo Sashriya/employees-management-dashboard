@@ -1,11 +1,14 @@
 // client/src/services/api.js
 import axios from 'axios';
-// client/src/services/api.js - Update the import at the top
 import { 
   localAuthService, 
   localEmployeeService, 
   localAssignmentService, 
-  localNotificationService 
+  localNotificationService,
+  localDepartmentService,
+  localLeaveService,
+  backupService,
+  isLocalStorageAvailable as localStorageAvailable
 } from './localStorage.service.js';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -38,7 +41,6 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Only clear if not using local storage
       if (!isUsingLocalStorage()) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -57,11 +59,23 @@ let isBackendAvailable = true;
 export const setStorageMode = (mode) => {
   storageMode = mode;
   localStorage.setItem('storage_mode', mode);
-  // Don't reload, just update the mode
   window.dispatchEvent(new Event('storageModeChange'));
 };
 
 export const getStorageMode = () => storageMode;
+
+// Export isLocalStorageAvailable function
+export const isLocalStorageAvailable = () => {
+  try {
+    const test = '__storage_test__';
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return true;
+  } catch (e) {
+    console.error('LocalStorage not available:', e);
+    return false;
+  }
+};
 
 const isUsingLocalStorage = () => {
   if (storageMode === 'local') return true;
@@ -93,9 +107,9 @@ window.addEventListener('storageModeChange', () => {
 
 // ========== AUTH SERVICE ==========
 export const authService = {
-  // Register new user
   register: async (userData) => {
     if (isUsingLocalStorage()) {
+      console.log('Using local storage for registration');
       return localAuthService.register(userData);
     }
     try {
@@ -110,9 +124,9 @@ export const authService = {
     }
   },
   
-  // Login user
   login: async (credentials) => {
     if (isUsingLocalStorage()) {
+      console.log('Using local storage for login');
       return localAuthService.login(credentials);
     }
     try {
@@ -127,7 +141,6 @@ export const authService = {
     }
   },
   
-  // Get current user
   getMe: async () => {
     if (isUsingLocalStorage()) {
       return localAuthService.getMe();
@@ -143,7 +156,6 @@ export const authService = {
     }
   },
   
-  // Update user profile
   updateProfile: async (userData) => {
     if (isUsingLocalStorage()) {
       return localAuthService.updateProfile(userData);
@@ -159,7 +171,6 @@ export const authService = {
     }
   },
   
-  // Change password
   changePassword: async (currentPassword, newPassword) => {
     if (isUsingLocalStorage()) {
       return localAuthService.changePassword(currentPassword, newPassword);
@@ -175,7 +186,6 @@ export const authService = {
     }
   },
   
-  // Logout
   logout: () => {
     if (!isUsingLocalStorage()) {
       localStorage.removeItem('token');
@@ -186,7 +196,6 @@ export const authService = {
     localAuthService.logout();
   },
   
-  // Check if authenticated
   isAuthenticated: () => {
     if (isUsingLocalStorage()) {
       return localAuthService.isAuthenticated();
@@ -194,7 +203,6 @@ export const authService = {
     return !!localStorage.getItem('token');
   },
   
-  // Get token
   getToken: () => {
     if (isUsingLocalStorage()) {
       return localAuthService.getToken();
@@ -205,7 +213,6 @@ export const authService = {
 
 // ========== EMPLOYEE SERVICE ==========
 export const employeeService = {
-  // Get all employees with pagination and search
   getAll: async (params = {}) => {
     if (isUsingLocalStorage()) {
       return localEmployeeService.getAll(params);
@@ -215,14 +222,12 @@ export const employeeService = {
       return response;
     } catch (error) {
       if (storageMode === 'auto') {
-        console.log('Backend unavailable, using local storage');
         return localEmployeeService.getAll(params);
       }
       throw error;
     }
   },
   
-  // Get employee by ID
   getById: async (id) => {
     if (isUsingLocalStorage()) {
       return localEmployeeService.getById(id);
@@ -238,7 +243,21 @@ export const employeeService = {
     }
   },
   
-  // Create new employee
+  getByEmployeeId: async (employeeId) => {
+    if (isUsingLocalStorage()) {
+      return localEmployeeService.getByEmployeeId(employeeId);
+    }
+    try {
+      const response = await axiosInstance.get(`/employees/employeeId/${employeeId}`);
+      return response;
+    } catch (error) {
+      if (storageMode === 'auto') {
+        return localEmployeeService.getByEmployeeId(employeeId);
+      }
+      throw error;
+    }
+  },
+  
   create: async (data) => {
     if (isUsingLocalStorage()) {
       return localEmployeeService.create(data);
@@ -254,7 +273,6 @@ export const employeeService = {
     }
   },
   
-  // Update employee
   update: async (id, data) => {
     if (isUsingLocalStorage()) {
       return localEmployeeService.update(id, data);
@@ -270,7 +288,6 @@ export const employeeService = {
     }
   },
   
-  // Delete employee
   delete: async (id) => {
     if (isUsingLocalStorage()) {
       return localEmployeeService.delete(id);
@@ -286,97 +303,24 @@ export const employeeService = {
     }
   },
   
-  // Get employees by department
-  getByDepartment: async (department) => {
-    if (isUsingLocalStorage()) {
-      const allEmployees = await localEmployeeService.getAll({ limit: 1000 });
-      const filtered = allEmployees.data.employees.filter(emp => emp.department === department);
-      return { data: { employees: filtered, total: filtered.length } };
-    }
-    try {
-      const response = await axiosInstance.get(`/employees/department/${department}`);
-      return response;
-    } catch (error) {
-      if (storageMode === 'auto') {
-        const allEmployees = await localEmployeeService.getAll({ limit: 1000 });
-        const filtered = allEmployees.data.employees.filter(emp => emp.department === department);
-        return { data: { employees: filtered, total: filtered.length } };
-      }
-      throw error;
-    }
-  },
-  
-  // Get employees by status
-  getByStatus: async (status) => {
-    if (isUsingLocalStorage()) {
-      const allEmployees = await localEmployeeService.getAll({ limit: 1000 });
-      const filtered = allEmployees.data.employees.filter(emp => emp.status === status);
-      return { data: { employees: filtered, total: filtered.length } };
-    }
-    try {
-      const response = await axiosInstance.get(`/employees/status/${status}`);
-      return response;
-    } catch (error) {
-      if (storageMode === 'auto') {
-        const allEmployees = await localEmployeeService.getAll({ limit: 1000 });
-        const filtered = allEmployees.data.employees.filter(emp => emp.status === status);
-        return { data: { employees: filtered, total: filtered.length } };
-      }
-      throw error;
-    }
-  },
-  
-  // Get employee statistics
-  getStatistics: async () => {
-    if (isUsingLocalStorage()) {
-      const employees = await localEmployeeService.getAll({ limit: 1000 });
-      const deptCount = {};
-      let activeCount = 0;
-      employees.data.employees.forEach(emp => {
-        if (emp.status === 'Active') activeCount++;
-        deptCount[emp.department] = (deptCount[emp.department] || 0) + 1;
-      });
-      return {
-        data: {
-          total: employees.data.total,
-          active: activeCount,
-          departments: Object.entries(deptCount).map(([name, count]) => ({ name, count }))
-        }
-      };
-    }
-    try {
-      const response = await axiosInstance.get('/employees/statistics');
-      return response;
-    } catch (error) {
-      if (storageMode === 'auto') {
-        const employees = await localEmployeeService.getAll({ limit: 1000 });
-        const deptCount = {};
-        let activeCount = 0;
-        employees.data.employees.forEach(emp => {
-          if (emp.status === 'Active') activeCount++;
-          deptCount[emp.department] = (deptCount[emp.department] || 0) + 1;
-        });
-        return {
-          data: {
-            total: employees.data.total,
-            active: activeCount,
-            departments: Object.entries(deptCount).map(([name, count]) => ({ name, count }))
-          }
-        };
-      }
-      throw error;
-    }
-  },
-  
-  // Get employee stats for dashboard
   getStats: async () => {
-    return employeeService.getStatistics();
+    if (isUsingLocalStorage()) {
+      return localEmployeeService.getStats();
+    }
+    try {
+      const response = await axiosInstance.get('/employees/stats');
+      return response;
+    } catch (error) {
+      if (storageMode === 'auto') {
+        return localEmployeeService.getStats();
+      }
+      throw error;
+    }
   }
 };
 
 // ========== ASSIGNMENT SERVICE ==========
 export const assignmentService = {
-  // Get all assignments
   getAll: async (params = {}) => {
     if (isUsingLocalStorage()) {
       return localAssignmentService.getAll(params);
@@ -392,7 +336,6 @@ export const assignmentService = {
     }
   },
   
-  // Get assignment by ID
   getById: async (id) => {
     if (isUsingLocalStorage()) {
       return localAssignmentService.getById(id);
@@ -408,7 +351,6 @@ export const assignmentService = {
     }
   },
   
-  // Create assignment
   create: async (data) => {
     if (isUsingLocalStorage()) {
       return localAssignmentService.create(data);
@@ -424,23 +366,6 @@ export const assignmentService = {
     }
   },
   
-  // Update assignment
-  update: async (id, data) => {
-    if (isUsingLocalStorage()) {
-      return localAssignmentService.update(id, data);
-    }
-    try {
-      const response = await axiosInstance.put(`/assignments/${id}`, data);
-      return response;
-    } catch (error) {
-      if (storageMode === 'auto') {
-        return localAssignmentService.update(id, data);
-      }
-      throw error;
-    }
-  },
-  
-  // Update assignment status
   updateStatus: async (id, status) => {
     if (isUsingLocalStorage()) {
       return localAssignmentService.updateStatus(id, status);
@@ -456,7 +381,6 @@ export const assignmentService = {
     }
   },
   
-  // Delete assignment
   delete: async (id) => {
     if (isUsingLocalStorage()) {
       return localAssignmentService.delete(id);
@@ -472,41 +396,31 @@ export const assignmentService = {
     }
   },
   
-  // Get assignments by department
   getByDepartment: async (department) => {
     if (isUsingLocalStorage()) {
-      const allAssignments = await localAssignmentService.getAll();
-      const filtered = allAssignments.data.assignments.filter(a => a.assignedDepartment === department);
-      return { data: { assignments: filtered } };
+      return localAssignmentService.getByDepartment(department);
     }
     try {
       const response = await axiosInstance.get(`/assignments/department/${department}`);
       return response;
     } catch (error) {
       if (storageMode === 'auto') {
-        const allAssignments = await localAssignmentService.getAll();
-        const filtered = allAssignments.data.assignments.filter(a => a.assignedDepartment === department);
-        return { data: { assignments: filtered } };
+        return localAssignmentService.getByDepartment(department);
       }
       throw error;
     }
   },
   
-  // Get assignments by employee
   getByEmployee: async (email) => {
     if (isUsingLocalStorage()) {
-      const allAssignments = await localAssignmentService.getAll();
-      const filtered = allAssignments.data.assignments.filter(a => a.assignedTo === email);
-      return { data: { assignments: filtered } };
+      return localAssignmentService.getByEmployee(email);
     }
     try {
       const response = await axiosInstance.get(`/assignments/employee/${email}`);
       return response;
     } catch (error) {
       if (storageMode === 'auto') {
-        const allAssignments = await localAssignmentService.getAll();
-        const filtered = allAssignments.data.assignments.filter(a => a.assignedTo === email);
-        return { data: { assignments: filtered } };
+        return localAssignmentService.getByEmployee(email);
       }
       throw error;
     }
@@ -515,7 +429,6 @@ export const assignmentService = {
 
 // ========== NOTIFICATION SERVICE ==========
 export const notificationService = {
-  // Get all notifications
   getAll: async (params = {}) => {
     if (isUsingLocalStorage()) {
       return localNotificationService.getAll(params);
@@ -531,7 +444,21 @@ export const notificationService = {
     }
   },
   
-  // Mark notification as read
+  create: async (data) => {
+    if (isUsingLocalStorage()) {
+      return localNotificationService.create(data);
+    }
+    try {
+      const response = await axiosInstance.post('/notifications', data);
+      return response;
+    } catch (error) {
+      if (storageMode === 'auto') {
+        return localNotificationService.create(data);
+      }
+      throw error;
+    }
+  },
+  
   markAsRead: async (id) => {
     if (isUsingLocalStorage()) {
       return localNotificationService.markAsRead(id);
@@ -547,65 +474,31 @@ export const notificationService = {
     }
   },
   
-  // Mark all as read
-  markAllAsRead: async () => {
+  markAllAsRead: async (role, userEmail) => {
     if (isUsingLocalStorage()) {
-      return localNotificationService.markAllAsRead();
+      return localNotificationService.markAllAsRead(role, userEmail);
     }
     try {
-      const response = await axiosInstance.post('/notifications/mark-all-read');
+      const response = await axiosInstance.post('/notifications/mark-all-read', { role, userEmail });
       return response;
     } catch (error) {
       if (storageMode === 'auto') {
-        return localNotificationService.markAllAsRead();
+        return localNotificationService.markAllAsRead(role, userEmail);
       }
       throw error;
     }
   },
   
-  // Delete notification
-  delete: async (id) => {
+  clearAll: async (role, userEmail) => {
     if (isUsingLocalStorage()) {
-      return localNotificationService.delete(id);
+      return localNotificationService.clearAll(role, userEmail);
     }
     try {
-      const response = await axiosInstance.delete(`/notifications/${id}`);
+      const response = await axiosInstance.delete('/notifications', { data: { role, userEmail } });
       return response;
     } catch (error) {
       if (storageMode === 'auto') {
-        return localNotificationService.delete(id);
-      }
-      throw error;
-    }
-  },
-  
-  // Clear all notifications
-  clearAll: async () => {
-    if (isUsingLocalStorage()) {
-      return localNotificationService.clearAll();
-    }
-    try {
-      const response = await axiosInstance.delete('/notifications');
-      return response;
-    } catch (error) {
-      if (storageMode === 'auto') {
-        return localNotificationService.clearAll();
-      }
-      throw error;
-    }
-  },
-  
-  // Get unread count
-  getUnreadCount: async () => {
-    if (isUsingLocalStorage()) {
-      return localNotificationService.getUnreadCount();
-    }
-    try {
-      const response = await axiosInstance.get('/notifications/unread/count');
-      return response;
-    } catch (error) {
-      if (storageMode === 'auto') {
-        return localNotificationService.getUnreadCount();
+        return localNotificationService.clearAll(role, userEmail);
       }
       throw error;
     }
@@ -614,56 +507,86 @@ export const notificationService = {
 
 // ========== DEPARTMENT SERVICE ==========
 export const departmentService = {
-  // Get all departments
   getAll: async () => {
     if (isUsingLocalStorage()) {
-      const employees = await localEmployeeService.getAll({ limit: 1000 });
-      const departments = [...new Set(employees.data.employees.map(emp => emp.department).filter(Boolean))];
-      return { data: { departments } };
+      return localDepartmentService.getAll();
     }
     try {
       const response = await axiosInstance.get('/departments');
       return response;
     } catch (error) {
       if (storageMode === 'auto') {
-        const employees = await localEmployeeService.getAll({ limit: 1000 });
-        const departments = [...new Set(employees.data.employees.map(emp => emp.department).filter(Boolean))];
-        return { data: { departments } };
-      }
-      throw error;
-    }
-  },
-  
-  // Get department stats
-  getStats: async () => {
-    if (isUsingLocalStorage()) {
-      const employees = await localEmployeeService.getAll({ limit: 1000 });
-      const deptCount = {};
-      employees.data.employees.forEach(emp => {
-        if (emp.department) {
-          deptCount[emp.department] = (deptCount[emp.department] || 0) + 1;
-        }
-      });
-      return { data: { departments: deptCount } };
-    }
-    try {
-      const response = await axiosInstance.get('/departments/stats');
-      return response;
-    } catch (error) {
-      if (storageMode === 'auto') {
-        const employees = await localEmployeeService.getAll({ limit: 1000 });
-        const deptCount = {};
-        employees.data.employees.forEach(emp => {
-          if (emp.department) {
-            deptCount[emp.department] = (deptCount[emp.department] || 0) + 1;
-          }
-        });
-        return { data: { departments: deptCount } };
+        return localDepartmentService.getAll();
       }
       throw error;
     }
   }
 };
 
-// Export the instance for direct use
+// ========== LEAVE SERVICE ==========
+export const leaveService = {
+  getAll: async () => {
+    if (isUsingLocalStorage()) {
+      return localLeaveService.getAll();
+    }
+    try {
+      const response = await axiosInstance.get('/leaves');
+      return response;
+    } catch (error) {
+      if (storageMode === 'auto') {
+        return localLeaveService.getAll();
+      }
+      throw error;
+    }
+  },
+  
+  getByEmployee: async (email) => {
+    if (isUsingLocalStorage()) {
+      return localLeaveService.getByEmployee(email);
+    }
+    try {
+      const response = await axiosInstance.get(`/leaves/employee/${email}`);
+      return response;
+    } catch (error) {
+      if (storageMode === 'auto') {
+        return localLeaveService.getByEmployee(email);
+      }
+      throw error;
+    }
+  },
+  
+  create: async (data) => {
+    if (isUsingLocalStorage()) {
+      return localLeaveService.create(data);
+    }
+    try {
+      const response = await axiosInstance.post('/leaves', data);
+      return response;
+    } catch (error) {
+      if (storageMode === 'auto') {
+        return localLeaveService.create(data);
+      }
+      throw error;
+    }
+  },
+  
+  updateStatus: async (id, status, reviewedBy, comments) => {
+    if (isUsingLocalStorage()) {
+      return localLeaveService.updateStatus(id, status, reviewedBy, comments);
+    }
+    try {
+      const response = await axiosInstance.patch(`/leaves/${id}/status`, { status, reviewedBy, comments });
+      return response;
+    } catch (error) {
+      if (storageMode === 'auto') {
+        return localLeaveService.updateStatus(id, status, reviewedBy, comments);
+      }
+      throw error;
+    }
+  }
+};
+
+// ========== BACKUP SERVICE ==========
+export { backupService };
+
 export default axiosInstance;

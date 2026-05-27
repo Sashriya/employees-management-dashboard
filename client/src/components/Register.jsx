@@ -22,21 +22,21 @@ const Register = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [storageAvailable, setStorageAvailable] = useState(true);
+  // const [storageAvailable, setStorageAvailable] = useState(true);
 
-  useEffect(() => {
-    // Check localStorage availability on component mount
-    const available = isLocalStorageAvailable();
-    setStorageAvailable(available);
-    if (!available) {
-      toast.error('LocalStorage is not available. Please check your browser settings.');
-    }
+  // useEffect(() => {
+  //   // Check localStorage availability on component mount
+  //   const available = isLocalStorageAvailable();
+  //   setStorageAvailable(available);
+  //   if (!available) {
+  //     toast.error('LocalStorage is not available. Please check your browser settings.');
+  //   }
     
-    // Debug: Log current localStorage data
-    console.log('Current localStorage on register page load:');
-    console.log('ems_users:', localStorage.getItem('ems_users'));
-    console.log('ems_employees:', localStorage.getItem('ems_employees'));
-  }, []);
+  //   // Debug: Log current localStorage data
+  //   console.log('Current localStorage on register page load:');
+  //   console.log('ems_users:', localStorage.getItem('ems_users'));
+  //   console.log('ems_employees:', localStorage.getItem('ems_employees'));
+  // }, []);
 
   const handleChange = (e) => {
     setFormData({
