@@ -32,19 +32,10 @@ A full-stack employee management application with React frontend and Node.js bac
    ```bash
    npm install
    ```
-3. Create a `.env` file (optional) with values:
-   ```env
-   MONGODB_URI=mongodb://localhost:27017/employee_management
-   JWT_SECRET=your_secret_key
-   PORT=5000
-   ```
-4. Start the backend:
+3. Start the backend:
    ```bash
    npm run dev
    ```
-
-The backend API will run on `http://localhost:5000` by default.
-
 ### Frontend
 
 1. Open a new terminal and navigate to `client/`:
