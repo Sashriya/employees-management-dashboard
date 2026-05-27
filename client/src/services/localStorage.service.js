@@ -12,19 +12,120 @@ export const STORAGE_KEYS = {
   LEAVE_REQUESTS: 'ems_leave_requests'
 };
 
-const getUsers = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
-const getEmployees = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
-const getAssignments = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.ASSIGNMENTS) || '[]');
-const getNotifications = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS) || '[]');
-const getUserProfile = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_PROFILE) || '{}');
-const getLeaveRequests = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.LEAVE_REQUESTS) || '[]');
+// Helper functions
+const getUsers = () => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
+  } catch (error) {
+    console.error('Error parsing users:', error);
+    return [];
+  }
+};
 
-const saveUsers = (users) => localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-const saveEmployees = (employees) => localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(employees));
-const saveAssignments = (assignments) => localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignments));
-const saveNotifications = (notifications) => localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(notifications));
-const saveUserProfile = (profile) => localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
-const saveLeaveRequests = (requests) => localStorage.setItem(STORAGE_KEYS.LEAVE_REQUESTS, JSON.stringify(requests));
+const getEmployees = () => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.EMPLOYEES) || '[]');
+  } catch (error) {
+    console.error('Error parsing employees:', error);
+    return [];
+  }
+};
+
+const getAssignments = () => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ASSIGNMENTS) || '[]');
+  } catch (error) {
+    console.error('Error parsing assignments:', error);
+    return [];
+  }
+};
+
+const getNotifications = () => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS) || '[]');
+  } catch (error) {
+    console.error('Error parsing notifications:', error);
+    return [];
+  }
+};
+
+const getUserProfile = () => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_PROFILE) || '{}');
+  } catch (error) {
+    console.error('Error parsing user profile:', error);
+    return {};
+  }
+};
+
+const getLeaveRequests = () => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.LEAVE_REQUESTS) || '[]');
+  } catch (error) {
+    console.error('Error parsing leave requests:', error);
+    return [];
+  }
+};
+
+const saveUsers = (users) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+    return true;
+  } catch (error) {
+    console.error('Error saving users:', error);
+    return false;
+  }
+};
+
+const saveEmployees = (employees) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(employees));
+    return true;
+  } catch (error) {
+    console.error('Error saving employees:', error);
+    return false;
+  }
+};
+
+const saveAssignments = (assignments) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignments));
+    return true;
+  } catch (error) {
+    console.error('Error saving assignments:', error);
+    return false;
+  }
+};
+
+const saveNotifications = (notifications) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(notifications));
+    return true;
+  } catch (error) {
+    console.error('Error saving notifications:', error);
+    return false;
+  }
+};
+
+const saveUserProfile = (profile) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
+    return true;
+  } catch (error) {
+    console.error('Error saving user profile:', error);
+    return false;
+  }
+};
+
+const saveLeaveRequests = (requests) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.LEAVE_REQUESTS, JSON.stringify(requests));
+    return true;
+  } catch (error) {
+    console.error('Error saving leave requests:', error);
+    return false;
+  }
+};
 
 // Helper function to generate Employee ID
 const generateEmployeeId = () => {
@@ -45,137 +146,187 @@ const generateEmployeeId = () => {
   });
   
   const nextNum = maxNum + 1;
-  return `EMP${nextNum.toString().padStart(3, '0')}`;
+  const newId = `EMP${nextNum.toString().padStart(3, '0')}`;
+  console.log('Generated new Employee ID:', newId);
+  return newId;
+};
+
+// Check localStorage availability
+export const isLocalStorageAvailable = () => {
+  try {
+    const test = '__storage_test__';
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
 // ========== AUTH SERVICE ==========
 export const localAuthService = {
   register: async (userData) => {
-    const users = getUsers();
-    const existingUser = users.find(u => u.email === userData.email);
+    console.log('Starting registration with data:', userData);
     
-    if (existingUser) {
-      throw new Error('User already exists');
+    // Check localStorage availability
+    if (!isLocalStorageAvailable()) {
+      throw new Error('LocalStorage is not available. Please check your browser settings.');
     }
     
-    const employeeId = generateEmployeeId();
-    
-    const newUser = {
-      id: Date.now().toString(),
-      employeeId: employeeId,
-      username: userData.username,
-      email: userData.email,
-      password: userData.password,
-      fullName: userData.fullName || userData.username,
-      gender: userData.gender || '',
-      role: userData.role || 'employee',
-      department: userData.department || '',
-      position: userData.position || '',
-      phoneNumber: userData.phoneNumber || '',
-      location: userData.location || '',
-      address: userData.address || '',
-      createdAt: new Date().toISOString()
-    };
-    
-    users.push(newUser);
-    saveUsers(users);
-    
-    const employees = getEmployees();
-    const newEmployee = {
-      id: Date.now().toString(),
-      employeeId: employeeId,
-      name: newUser.fullName,
-      fullName: newUser.fullName,
-      email: newUser.email,
-      gender: newUser.gender,
-      department: newUser.department,
-      position: newUser.position,
-      phoneNumber: newUser.phoneNumber,
-      location: newUser.location,
-      address: newUser.address,
-      status: 'Active',
-      joinDate: new Date().toISOString().split('T')[0],
-      createdAt: new Date().toISOString()
-    };
-    employees.push(newEmployee);
-    saveEmployees(employees);
-    
-    const userProfile = {
-      id: newUser.id,
-      employeeId: employeeId,
-      username: newUser.username,
-      email: newUser.email,
-      fullName: newUser.fullName,
-      gender: newUser.gender,
-      department: newUser.department,
-      phoneNumber: newUser.phoneNumber,
-      location: newUser.location,
-      address: newUser.address,
-      position: newUser.position,
-      role: newUser.role,
-      status: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      profilePicture: null,
-      skills: [],
-      experience: [],
-      education: []
-    };
-    saveUserProfile(userProfile);
-    
-    const token = `local_token_${newUser.id}`;
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify({
-      id: newUser.id,
-      employeeId: employeeId,
-      username: newUser.username,
-      email: newUser.email,
-      role: newUser.role,
-      fullName: newUser.fullName,
-      gender: newUser.gender,
-      department: newUser.department
-    }));
-    localStorage.setItem('userRole', newUser.role);
-    
-    return { data: { token, user: newUser, employeeId: employeeId } };
+    try {
+      const users = getUsers();
+      console.log('Existing users:', users);
+      
+      const existingUser = users.find(u => u.email === userData.email);
+      if (existingUser) {
+        throw new Error('User already exists with this email');
+      }
+      
+      const employeeId = generateEmployeeId();
+      console.log('Generated Employee ID:', employeeId);
+      
+      const newUser = {
+        id: Date.now().toString(),
+        employeeId: employeeId,
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        fullName: userData.fullName || userData.username,
+        gender: userData.gender || '',
+        role: userData.role || 'employee',
+        department: userData.department || '',
+        position: userData.position || '',
+        phoneNumber: userData.phoneNumber || '',
+        location: userData.location || '',
+        address: userData.address || '',
+        createdAt: new Date().toISOString()
+      };
+      
+      users.push(newUser);
+      const saved = saveUsers(users);
+      if (!saved) {
+        throw new Error('Failed to save user to localStorage');
+      }
+      console.log('User saved successfully:', newUser);
+      
+      const employees = getEmployees();
+      const newEmployee = {
+        id: Date.now().toString(),
+        employeeId: employeeId,
+        name: newUser.fullName,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        gender: newUser.gender,
+        department: newUser.department,
+        position: newUser.position,
+        phoneNumber: newUser.phoneNumber,
+        location: newUser.location,
+        address: newUser.address,
+        status: 'Active',
+        joinDate: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString()
+      };
+      employees.push(newEmployee);
+      saveEmployees(employees);
+      console.log('Employee saved successfully:', newEmployee);
+      
+      const userProfile = {
+        id: newUser.id,
+        employeeId: employeeId,
+        username: newUser.username,
+        email: newUser.email,
+        fullName: newUser.fullName,
+        gender: newUser.gender,
+        department: newUser.department,
+        phoneNumber: newUser.phoneNumber,
+        location: newUser.location,
+        address: newUser.address,
+        position: newUser.position,
+        role: newUser.role,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        profilePicture: null,
+        skills: [],
+        experience: [],
+        education: []
+      };
+      saveUserProfile(userProfile);
+      console.log('User profile saved successfully');
+      
+      const token = `local_token_${newUser.id}`;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
+        id: newUser.id,
+        employeeId: employeeId,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        fullName: newUser.fullName,
+        gender: newUser.gender,
+        department: newUser.department
+      }));
+      localStorage.setItem('userRole', newUser.role);
+      
+      console.log('Registration completed successfully');
+      
+      return { 
+        data: { 
+          token, 
+          user: newUser, 
+          employeeId: employeeId 
+        } 
+      };
+    } catch (error) {
+      console.error('Registration error in localStorage:', error);
+      throw error;
+    }
   },
   
   login: async (credentials) => {
-    const users = getUsers();
-    const employees = getEmployees();
+    console.log('Login attempt with:', credentials.employeeId);
     
-    // Try to find by Employee ID first
-    let user = users.find(u => u.employeeId === credentials.employeeIdOrEmail && u.password === credentials.password);
-    
-    // If not found by Employee ID, try by email
-    if (!user) {
-      user = users.find(u => u.email === credentials.employeeIdOrEmail && u.password === credentials.password);
+    try {
+      const users = getUsers();
+      console.log('Total users:', users.length);
+      
+      const user = users.find(u => 
+        u.employeeId === credentials.employeeId && u.password === credentials.password
+      );
+      
+      if (!user) {
+        throw new Error('Invalid Employee ID or Password');
+      }
+      
+      console.log('User found:', user);
+      
+      const employees = getEmployees();
+      const employee = employees.find(e => e.email === user.email);
+      
+      const token = `local_token_${user.id}`;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
+        id: user.id,
+        employeeId: user.employeeId,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName,
+        gender: user.gender,
+        department: user.department,
+        position: user.position,
+        phoneNumber: user.phoneNumber,
+        location: user.location
+      }));
+      localStorage.setItem('userRole', user.role);
+      
+      console.log('Login successful');
+      
+      return { data: { token, user, employee } };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-    
-    if (!user) {
-      throw new Error('Invalid credentials');
-    }
-    
-    const employee = employees.find(e => e.email === user.email);
-    
-    const token = `local_token_${user.id}`;
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify({
-      id: user.id,
-      employeeId: user.employeeId,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      fullName: user.fullName,
-      gender: user.gender,
-      department: user.department,
-      position: user.position,
-      phoneNumber: user.phoneNumber,
-      location: user.location
-    }));
-    localStorage.setItem('userRole', user.role);
-    
-    return { data: { token, user, employee } };
   },
   
   getMe: async () => {

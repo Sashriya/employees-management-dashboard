@@ -1,8 +1,8 @@
 // client/src/pages/Register.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { authService } from '../services/api';
+import { authService, isLocalStorageAvailable } from '../services/api';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -22,6 +22,21 @@ const Register = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [storageAvailable, setStorageAvailable] = useState(true);
+
+  useEffect(() => {
+    // Check localStorage availability on component mount
+    const available = isLocalStorageAvailable();
+    setStorageAvailable(available);
+    if (!available) {
+      toast.error('LocalStorage is not available. Please check your browser settings.');
+    }
+    
+    // Debug: Log current localStorage data
+    console.log('Current localStorage on register page load:');
+    console.log('ems_users:', localStorage.getItem('ems_users'));
+    console.log('ems_employees:', localStorage.getItem('ems_employees'));
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -67,6 +82,13 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check localStorage availability again
+    if (!isLocalStorageAvailable()) {
+      toast.error('LocalStorage is not available. Please check your browser settings.');
+      return;
+    }
+    
     const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -76,23 +98,36 @@ const Register = () => {
     setLoading(true);
     try {
       const { confirmPassword, ...registerData } = formData;
+      
+      console.log('Submitting registration for:', registerData.email);
+      
       const response = await authService.register(registerData);
       
-      // The response should contain the employeeId
+      console.log('Registration response:', response);
+      
       const employeeId = response.data?.user?.employeeId || response.data?.employeeId;
       
-      toast.success(`Registration successful! Your Employee ID: ${employeeId}`, {
-        duration: 5000,
-        icon: '🎉'
-      });
+      // Verify that data was saved
+      const users = JSON.parse(localStorage.getItem('ems_users') || '[]');
+      const savedUser = users.find(u => u.email === registerData.email);
       
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
+      if (savedUser) {
+        console.log('Verification: User saved successfully', savedUser);
+        toast.success(`Registration successful! Your Employee ID: ${employeeId}`, {
+          duration: 5000,
+          icon: '🎉'
+        });
+        
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      } else {
+        throw new Error('User data not found in localStorage after registration');
+      }
       
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
+      toast.error(error.response?.data?.message || error.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -117,6 +152,27 @@ const Register = () => {
     { value: 'Female', label: '👩 Female' },
     { value: 'Other', label: '👤 Other' }
   ];
+
+  if (!storageAvailable) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">LocalStorage Not Available</h2>
+          <p className="text-gray-600 mb-4">
+            LocalStorage is not available in your browser. Please check your browser settings 
+            or try using a different browser.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-blue-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
