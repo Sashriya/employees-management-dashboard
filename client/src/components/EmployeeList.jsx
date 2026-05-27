@@ -26,7 +26,10 @@ const EmployeeList = () => {
       }
     } catch (error) {
       console.error('Error fetching employees:', error);
-      toast.error('Failed to fetch employees');
+      // Fallback to localStorage directly
+      const employees = JSON.parse(localStorage.getItem('ems_employees') || '[]');
+      setEmployees(employees);
+      toast.error('Failed to fetch employees from API, using local data');
     } finally {
       setLoading(false);
     }
@@ -45,14 +48,23 @@ const EmployeeList = () => {
   const handleDelete = async (id, email) => {
     if (window.confirm('Are you sure you want to delete this employee?')) {
       try {
-        await employeeService.delete(id);
+        // Delete from employees
+        let employees = JSON.parse(localStorage.getItem('ems_employees') || '[]');
+        const updatedEmployees = employees.filter(emp => emp.id !== id);
+        localStorage.setItem('ems_employees', JSON.stringify(updatedEmployees));
         
-        const users = JSON.parse(localStorage.getItem('ems_users') || '[]');
+        // Delete from users
+        let users = JSON.parse(localStorage.getItem('ems_users') || '[]');
         const updatedUsers = users.filter(u => u.email !== email);
         localStorage.setItem('ems_users', JSON.stringify(updatedUsers));
         
+        // Delete from assignments if any
+        let assignments = JSON.parse(localStorage.getItem('ems_assignments') || '[]');
+        const updatedAssignments = assignments.filter(a => a.assignedTo !== email);
+        localStorage.setItem('ems_assignments', JSON.stringify(updatedAssignments));
+        
         toast.success('Employee deleted successfully');
-        fetchEmployees();
+        fetchEmployees(); // Refresh the list
       } catch (error) {
         console.error('Error deleting employee:', error);
         toast.error('Failed to delete employee');

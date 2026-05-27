@@ -21,6 +21,55 @@ function App() {
   const [backendStatus, setBackendStatus] = useState(null);
 
   useEffect(() => {
+    // Force local storage mode on app load
+    localStorage.setItem('storage_mode', 'local');
+    
+    // Initialize default data if empty
+    const employees = localStorage.getItem('ems_employees');
+    if (!employees || employees === '[]') {
+      // Add sample data if needed
+      const sampleEmployees = [
+        {
+          id: '1',
+          employeeId: 'EMP001',
+          name: 'John Doe',
+          fullName: 'John Doe',
+          email: 'john@example.com',
+          gender: 'Male',
+          department: 'Information Technology',
+          position: 'Senior Developer',
+          phoneNumber: '9876543210',
+          location: 'Chennai, Tamil Nadu',
+          address: 'Test Address',
+          status: 'Active',
+          joinDate: new Date().toISOString().split('T')[0],
+          createdAt: new Date().toISOString()
+        }
+      ];
+      localStorage.setItem('ems_employees', JSON.stringify(sampleEmployees));
+      
+      const sampleUsers = [
+        {
+          id: '1',
+          employeeId: 'EMP001',
+          username: 'john_doe',
+          email: 'john@example.com',
+          password: 'password123',
+          fullName: 'John Doe',
+          gender: 'Male',
+          role: 'employee',
+          department: 'Information Technology',
+          position: 'Senior Developer',
+          phoneNumber: '9876543210',
+          location: 'Chennai, Tamil Nadu',
+          address: 'Test Address',
+          status: 'active',
+          createdAt: new Date().toISOString()
+        }
+      ];
+      localStorage.setItem('ems_users', JSON.stringify(sampleUsers));
+    }
+    
     const checkStatus = async () => {
       const isAvailable = await checkBackendHealth();
       setBackendStatus(isAvailable);

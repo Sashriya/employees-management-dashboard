@@ -83,23 +83,28 @@ const EmployeeForm = () => {
 
   const fetchEmployee = async () => {
     try {
-      const response = await employeeService.getById(id);
-      if (response.data) {
-        const emp = response.data;
+      // Get from localStorage directly
+      const employees = JSON.parse(localStorage.getItem('ems_employees') || '[]');
+      const employee = employees.find(emp => emp.id === id);
+      
+      if (employee) {
         setFormData({
-          name: emp.name || emp.fullName || '',
-          fullName: emp.fullName || emp.name || '',
-          email: emp.email || '',
-          gender: emp.gender || '',
-          department: emp.department || '',
-          position: emp.position || '',
-          phoneNumber: emp.phoneNumber || '',
-          location: emp.location || '',
-          address: emp.address || '',
-          status: emp.status || 'Active',
-          joinDate: emp.joinDate || new Date().toISOString().split('T')[0]
+          name: employee.name || employee.fullName || '',
+          fullName: employee.fullName || employee.name || '',
+          email: employee.email || '',
+          gender: employee.gender || '',
+          department: employee.department || '',
+          position: employee.position || '',
+          phoneNumber: employee.phoneNumber || '',
+          location: employee.location || '',
+          address: employee.address || '',
+          status: employee.status || 'Active',
+          joinDate: employee.joinDate || new Date().toISOString().split('T')[0]
         });
-        setGeneratedEmpId(emp.employeeId || '');
+        setGeneratedEmpId(employee.employeeId || '');
+      } else {
+        toast.error('Employee not found');
+        navigate('/employees');
       }
     } catch (error) {
       console.error('Error fetching employee:', error);
@@ -165,62 +170,92 @@ const EmployeeForm = () => {
         joinDate: formData.joinDate
       };
 
-      let response;
       if (isEditMode) {
-        response = await employeeService.update(id, employeeData);
-        toast.success('Employee updated successfully!');
+        // Update in localStorage directly
+        const employees = JSON.parse(localStorage.getItem('ems_employees') || '[]');
+        const index = employees.findIndex(emp => emp.id === id);
         
-        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-        if (currentUser.email === formData.email) {
-          const updatedUser = {
-            ...currentUser,
-            fullName: employeeData.fullName,
-            gender: employeeData.gender,
-            department: employeeData.department,
-            phoneNumber: employeeData.phoneNumber,
-            location: employeeData.location,
-            address: employeeData.address,
-            position: employeeData.position
-          };
-          localStorage.setItem('user', JSON.stringify(updatedUser));
+        if (index !== -1) {
+          employees[index] = { ...employees[index], ...employeeData, updatedAt: new Date().toISOString() };
+          localStorage.setItem('ems_employees', JSON.stringify(employees));
           
-          const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-          const updatedProfile = {
-            ...userProfile,
-            fullName: employeeData.fullName,
-            gender: employeeData.gender,
-            department: employeeData.department,
-            phoneNumber: employeeData.phoneNumber,
-            location: employeeData.location,
-            address: employeeData.address,
-            position: employeeData.position,
-            updatedAt: new Date().toISOString()
-          };
-          localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
-        }
-        
-        const users = JSON.parse(localStorage.getItem('ems_users') || '[]');
-        const userIndex = users.findIndex(u => u.email === formData.email);
-        if (userIndex !== -1) {
-          users[userIndex] = {
-            ...users[userIndex],
-            fullName: employeeData.fullName,
-            gender: employeeData.gender,
-            department: employeeData.department,
-            phoneNumber: employeeData.phoneNumber,
-            location: employeeData.location,
-            address: employeeData.address,
-            position: employeeData.position,
-            updatedAt: new Date().toISOString()
-          };
-          localStorage.setItem('ems_users', JSON.stringify(users));
+          // Also update users array
+          const users = JSON.parse(localStorage.getItem('ems_users') || '[]');
+          const userIndex = users.findIndex(u => u.email === formData.email);
+          if (userIndex !== -1) {
+            users[userIndex] = {
+              ...users[userIndex],
+              fullName: employeeData.fullName,
+              gender: employeeData.gender,
+              department: employeeData.department,
+              phoneNumber: employeeData.phoneNumber,
+              location: employeeData.location,
+              address: employeeData.address,
+              position: employeeData.position,
+              updatedAt: new Date().toISOString()
+            };
+            localStorage.setItem('ems_users', JSON.stringify(users));
+          }
+          
+          // Update current user if it's the logged in user
+          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+          if (currentUser.email === formData.email) {
+            const updatedUser = {
+              ...currentUser,
+              fullName: employeeData.fullName,
+              gender: employeeData.gender,
+              department: employeeData.department,
+              phoneNumber: employeeData.phoneNumber,
+              location: employeeData.location
+            };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+          
+          toast.success('Employee updated successfully!');
+          navigate('/employees');
+        } else {
+          toast.error('Employee not found');
         }
       } else {
-        response = await employeeService.create(employeeData);
-        toast.success(`Employee added successfully! Employee ID: ${response.data.employeeId}`);
+        // Create new employee
+        const employees = JSON.parse(localStorage.getItem('ems_employees') || '[]');
+        const newId = Date.now().toString();
+        const newEmployeeId = `EMP${(employees.length + 1).toString().padStart(3, '0')}`;
+        
+        const newEmployee = {
+          id: newId,
+          employeeId: newEmployeeId,
+          ...employeeData,
+          createdAt: new Date().toISOString()
+        };
+        employees.push(newEmployee);
+        localStorage.setItem('ems_employees', JSON.stringify(employees));
+        
+        // Also create user account
+        const users = JSON.parse(localStorage.getItem('ems_users') || '[]');
+        const newUser = {
+          id: newId,
+          employeeId: newEmployeeId,
+          username: formData.email.split('@')[0],
+          email: formData.email,
+          password: 'password123',
+          fullName: employeeData.fullName,
+          gender: employeeData.gender,
+          role: 'employee',
+          department: employeeData.department,
+          position: employeeData.position,
+          phoneNumber: employeeData.phoneNumber,
+          location: employeeData.location,
+          address: employeeData.address,
+          status: 'active',
+          createdAt: new Date().toISOString()
+        };
+        users.push(newUser);
+        localStorage.setItem('ems_users', JSON.stringify(users));
+        
+        toast.success(`Employee added successfully! Employee ID: ${newEmployeeId}`);
+        navigate('/employees');
       }
-      
-      navigate('/employees');
     } catch (error) {
       console.error('Error saving employee:', error);
       toast.error(isEditMode ? 'Failed to update employee' : 'Failed to add employee');
@@ -255,7 +290,6 @@ const EmployeeForm = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Employee ID Preview for New Employee */}
             {!isEditMode && (
               <div className="bg-blue-50 p-3 rounded-lg mb-4">
                 <p className="text-sm text-blue-800">
